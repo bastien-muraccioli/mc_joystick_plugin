@@ -34,6 +34,22 @@ void mc_joystick_plugin::init(mc_control::MCGlobalController & controller, const
       "Joystick::Trigger", [this](joystickAnalogicInputs trigger) -> double { return get_inputs(trigger); });
   controller.controller().datastore().make_call(
       "Joystick::Stick", [this](joystickAnalogicInputs stick) -> Eigen::Vector2d { return get_stick_value(stick); });
+  if(!controller.controller().datastore().has("Joystick::UpPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::UpPad");
+  }
+  if(!controller.controller().datastore().has("Joystick::DownPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::DownPad");
+  }
+  if(!controller.controller().datastore().has("Joystick::LeftPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::LeftPad");
+  }
+  if(!controller.controller().datastore().has("Joystick::RightPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::RightPad");
+  }
 
   joystick_button_state_.setZero();
   joystick_analogical_state_.setZero();
@@ -167,27 +183,44 @@ void mc_joystick_plugin::before(mc_control::MCGlobalController & controller)
         {
           if(static_cast<double>(event_.value) == 32767)
           {
-            std::cout << "right pad" << std::endl;
+            // std::cout << "right pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::RIGHT_PAD, 0) = value;
+            controller.controller().datastore().assign<bool>("Joystick::RightPad", true);
+            controller.controller().datastore().assign<bool>("Joystick::LeftPad", false);
           }
           else if(static_cast<double>(event_.value) == -32767)
           {
-            std::cout << "left pad" << std::endl;
+            // std::cout << "left pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::LEFT_PAD, 0) = value;
+            controller.controller().datastore().assign<bool>("Joystick::RightPad", false);
+            controller.controller().datastore().assign<bool>("Joystick::LeftPad", true);
+          }
+          else
+          {
+            controller.controller().datastore().assign<bool>("Joystick::RightPad", false);
+            controller.controller().datastore().assign<bool>("Joystick::LeftPad", false);
           }
         }
         if(event_.number == 7)
         {
           if(static_cast<double>(event_.value) == 32767)
           {
-            std::cout << "bottom pad" << std::endl;
+            // std::cout << "bottom pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::DOWN_PAD, 0) = value;
+            controller.controller().datastore().assign<bool>("Joystick::DownPad", true);
+            controller.controller().datastore().assign<bool>("Joystick::UpPad", false);
           }
           else if(static_cast<double>(event_.value) == -32767)
           {
-
-            std::cout << "up pad" << std::endl;
+            // std::cout << "up pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::UP_PAD, 0) = value;
+            controller.controller().datastore().assign<bool>("Joystick::DownPad", false);
+            controller.controller().datastore().assign<bool>("Joystick::UpPad", true);
+          }
+          else
+          {
+            controller.controller().datastore().assign<bool>("Joystick::DownPad", false);
+            controller.controller().datastore().assign<bool>("Joystick::UpPad", false);
           }
         }
       }

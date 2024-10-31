@@ -32,6 +32,13 @@ You can access the value of an input using the function loaded in the datastore
 
   auto & stickFunc = ctl.datastore().get<std::function<Eigen::Vector2d(joystickAnalogicInputs)>>("Joystick::Stick");
 
+  // Pad
+  bool upPadState = datastore().get<bool>("Joystick::UpPad");
+  bool downPadState = datastore().get<bool>("Joystick::DownPad");
+  bool leftPadState = datastore().get<bool>("Joystick::LeftPad");
+  bool rightPadState = datastore().get<bool>("Joystick::RightPad");
+
+
 ```
 
 You can refer to `joystick_inputs.h` to get the available buttons
