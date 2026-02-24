@@ -183,14 +183,12 @@ void mc_joystick_plugin::before(mc_control::MCGlobalController & controller)
         {
           if(static_cast<double>(event_.value) == 32767)
           {
-            // std::cout << "right pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::RIGHT_PAD, 0) = value;
             controller.controller().datastore().assign<bool>("Joystick::RightPad", true);
             controller.controller().datastore().assign<bool>("Joystick::LeftPad", false);
           }
           else if(static_cast<double>(event_.value) == -32767)
           {
-            // std::cout << "left pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::LEFT_PAD, 0) = value;
             controller.controller().datastore().assign<bool>("Joystick::RightPad", false);
             controller.controller().datastore().assign<bool>("Joystick::LeftPad", true);
@@ -205,14 +203,12 @@ void mc_joystick_plugin::before(mc_control::MCGlobalController & controller)
         {
           if(static_cast<double>(event_.value) == 32767)
           {
-            // std::cout << "bottom pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::DOWN_PAD, 0) = value;
             controller.controller().datastore().assign<bool>("Joystick::DownPad", true);
             controller.controller().datastore().assign<bool>("Joystick::UpPad", false);
           }
           else if(static_cast<double>(event_.value) == -32767)
           {
-            // std::cout << "up pad" << std::endl;
             joystick_analogical_state_(joystickAnalogicInputs::UP_PAD, 0) = value;
             controller.controller().datastore().assign<bool>("Joystick::DownPad", false);
             controller.controller().datastore().assign<bool>("Joystick::UpPad", true);
