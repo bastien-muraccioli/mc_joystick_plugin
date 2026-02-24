@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.24)
 
 set(PROJECT_NAME mc_joystick_plugin)
 set(PROJECT_DESCRIPTION "")
@@ -6,7 +6,6 @@ set(PROJECT_URL "")
 set(PROJECT_VERSION 0.0.1)
 set(PROJECT_USE_CMAKE_EXPORT TRUE)
 set(CMAKE_CXX_STANDARD 17)
-set(CXX_DISABLE_WERROR 1) # FIXME fix errors and re-enable
 
 include(cmake/base.cmake)
 

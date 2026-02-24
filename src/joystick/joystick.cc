@@ -78,7 +78,7 @@ void Joystick::openPath(std::string devicePath, bool blocking)
 
 bool Joystick::sample(JoystickEvent* event)
 {
-  int bytes = read(_fd, event, sizeof(*event));
+  ssize_t bytes = read(_fd, event, sizeof(*event));
 
   if (bytes == -1)
     return false;
