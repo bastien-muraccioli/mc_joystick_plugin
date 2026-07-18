@@ -34,8 +34,22 @@ void mc_joystick_plugin::init(mc_control::MCGlobalController & controller, const
       "Joystick::Trigger", [this](joystickAnalogicInputs trigger) -> double { return get_inputs(trigger); });
   controller.controller().datastore().make_call(
       "Joystick::Stick", [this](joystickAnalogicInputs stick) -> Eigen::Vector2d { return get_stick_value(stick); });
-  controller.controller().datastore().make_call(
-      "Joystick::Pad", [this](joystickAnalogicInputs pads) -> double { return get_inputs(pads); });
+  if(!controller.controller().datastore().has("Joystick::UpPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::UpPad");
+  }
+  if(!controller.controller().datastore().has("Joystick::DownPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::DownPad");
+  }
+  if(!controller.controller().datastore().has("Joystick::LeftPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::LeftPad");
+  }
+  if(!controller.controller().datastore().has("Joystick::RightPad"))
+  {
+    controller.controller().datastore().make<bool>("Joystick::RightPad");
+  }
 
   joystick_button_state_.setZero();
   joystick_analogical_state_.setZero();
@@ -43,13 +57,13 @@ void mc_joystick_plugin::init(mc_control::MCGlobalController & controller, const
   controller.controller().gui()->addElement(
       {"JoystickPlugin", "State"}, mc_rtc::gui::Button("Reset", [this, &controller]() { reset(controller); }),
       mc_rtc::gui::Checkbox(
-          "A", [this]() -> bool { return get_inputs(joystickButtonInputs::A) == 1; }, [this]() {}),
+          "A", [this]() -> bool { return get_inputs(joystickButtonInputs::A) == 1; }, []() {}),
       mc_rtc::gui::Checkbox(
-          "B", [this]() -> bool { return get_inputs(joystickButtonInputs::B) == 1; }, [this]() {}),
+          "B", [this]() -> bool { return get_inputs(joystickButtonInputs::B) == 1; }, []() {}),
       mc_rtc::gui::Checkbox(
-          "X", [this]() -> bool { return get_inputs(joystickButtonInputs::X) == 1; }, [this]() {}),
+          "X", [this]() -> bool { return get_inputs(joystickButtonInputs::X) == 1; }, []() {}),
       mc_rtc::gui::Checkbox(
-          "Y", [this]() -> bool { return get_inputs(joystickButtonInputs::Y) == 1; }, [this]() {}),
+          "Y", [this]() -> bool { return get_inputs(joystickButtonInputs::Y) == 1; }, []() {}),
       mc_rtc::gui::ArrayLabel("Right Stick", {"x", "y"},
                               [this]() -> Eigen::Vector2d { return get_stick_value(joystickAnalogicInputs::R_STICK); }),
       mc_rtc::gui::ArrayLabel("Left Stick", {"x", "y"},
@@ -60,11 +74,20 @@ void mc_joystick_plugin::init(mc_control::MCGlobalController & controller, const
             return Eigen::Vector2d{get_inputs(joystickAnalogicInputs::LT), get_inputs(joystickAnalogicInputs::RT)};
           }),
       mc_rtc::gui::Checkbox(
-          "Start", [this]() -> bool { return get_inputs(joystickButtonInputs::START) == 1; }, [this]() {}),
+          "Start", [this]() -> bool { return get_inputs(joystickButtonInputs::START) == 1; }, []() {}),
       mc_rtc::gui::Checkbox(
-          "LB", [this]() -> bool { return get_inputs(joystickButtonInputs::LB) == 1; }, [this]() {}),
+          "LB", [this]() -> bool { return get_inputs(joystickButtonInputs::LB) == 1; }, []() {}),
       mc_rtc::gui::Checkbox(
-          "RB", [this]() -> bool { return get_inputs(joystickButtonInputs::RB) == 1; }, [this]() {}));
+          "RB", [this]() -> bool { return get_inputs(joystickButtonInputs::RB) == 1; }, []() {}),
+      mc_rtc::gui::Checkbox(
+          "Up", [this]() -> bool { return get_inputs(joystickAnalogicInputs::UP_PAD) != 0; }, []() {}),
+      mc_rtc::gui::Checkbox(
+          "Down", [this]() -> bool { return get_inputs(joystickAnalogicInputs::DOWN_PAD) != 0; }, []() {}),
+      mc_rtc::gui::Checkbox(
+          "Left", [this]() -> bool { return get_inputs(joystickAnalogicInputs::LEFT_PAD) != 0; }, []() {}),
+      mc_rtc::gui::Checkbox(
+          "Right", [this]() -> bool { return get_inputs(joystickAnalogicInputs::RIGHT_PAD) != 0; }, []() {})
+        );
 
   auto & logger = controller.controller().logger();
   logger.addLogEntries(
@@ -106,6 +129,7 @@ void mc_joystick_plugin::before(mc_control::MCGlobalController & controller)
   joystickConnected_ = joystick_.isFound();
   joystick_button_event_.setZero();
   controller.controller().datastore().assign<bool>("Joystick::connected", joystickConnected_);
+
   if(controller.controller().datastore().has("Replay::Log"))
   {
     const auto log = controller.controller().datastore().get<std::shared_ptr<mc_rtc::log::FlatLog>>("Replay::Log");
@@ -170,10 +194,23 @@ void mc_joystick_plugin::before(mc_control::MCGlobalController & controller)
           if(static_cast<double>(event_.value) == 32767)
           {
             joystick_analogical_state_(joystickAnalogicInputs::RIGHT_PAD, 0) = value;
+            joystick_analogical_state_(joystickAnalogicInputs::LEFT_PAD, 0) = 0;
+            controller.controller().datastore().assign<bool>("Joystick::RightPad", true);
+            controller.controller().datastore().assign<bool>("Joystick::LeftPad", false);
           }
           else if(static_cast<double>(event_.value) == -32767)
           {
             joystick_analogical_state_(joystickAnalogicInputs::LEFT_PAD, 0) = value;
+            joystick_analogical_state_(joystickAnalogicInputs::RIGHT_PAD, 0) = 0;
+            controller.controller().datastore().assign<bool>("Joystick::LeftPad", true);
+            controller.controller().datastore().assign<bool>("Joystick::RightPad", false);
+          }
+          else
+          {
+            joystick_analogical_state_(joystickAnalogicInputs::LEFT_PAD, 0) = 0;
+            joystick_analogical_state_(joystickAnalogicInputs::RIGHT_PAD, 0) = 0;
+            controller.controller().datastore().assign<bool>("Joystick::LeftPad", false);
+            controller.controller().datastore().assign<bool>("Joystick::RightPad", false);
           }
         }
         if(event_.number == 7)
@@ -181,10 +218,23 @@ void mc_joystick_plugin::before(mc_control::MCGlobalController & controller)
           if(static_cast<double>(event_.value) == 32767)
           {
             joystick_analogical_state_(joystickAnalogicInputs::DOWN_PAD, 0) = value;
+            joystick_analogical_state_(joystickAnalogicInputs::UP_PAD, 0) = 0;
+            controller.controller().datastore().assign<bool>("Joystick::DownPad", true);
+            controller.controller().datastore().assign<bool>("Joystick::UpPad", false);
           }
           else if(static_cast<double>(event_.value) == -32767)
           {
             joystick_analogical_state_(joystickAnalogicInputs::UP_PAD, 0) = value;
+            joystick_analogical_state_(joystickAnalogicInputs::DOWN_PAD, 0) = 0;
+            controller.controller().datastore().assign<bool>("Joystick::UpPad", true);
+            controller.controller().datastore().assign<bool>("Joystick::DownPad", false);
+          }
+          else
+          {
+            joystick_analogical_state_(joystickAnalogicInputs::UP_PAD, 0) = 0;
+            joystick_analogical_state_(joystickAnalogicInputs::DOWN_PAD, 0) = 0;
+            controller.controller().datastore().assign<bool>("Joystick::UpPad", false);
+            controller.controller().datastore().assign<bool>("Joystick::DownPad", false);
           }
         }
       }
