@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <cerrno>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -81,7 +82,21 @@ bool Joystick::sample(JoystickEvent* event)
   ssize_t bytes = read(_fd, event, sizeof(*event));
 
   if (bytes == -1)
+  {
+    if(errno != EAGAIN && errno != EWOULDBLOCK)
+    {
+      close(_fd);
+      _fd = -1;
+    }
     return false;
+  }
+
+  if(bytes == 0)
+  {
+    close(_fd);
+    _fd = -1;
+    return false;
+  }
 
   // NOTE if this condition is not met, we're probably out of sync and this
   // Joystick instance is likely unusable
